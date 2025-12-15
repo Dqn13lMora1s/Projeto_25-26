@@ -1,0 +1,21 @@
+{
+  "readings": [
+    { 
+      "id": 1, 
+      "temperature": 25.5, 
+      "moisture": 60, 
+      "ph": 7.0, 
+      "timestamp": "2025-12-12T10:00:00Z"
+    },
+    { 
+      "id": 2, 
+      "temperature": 30.9, 
+      "moisture": 75, 
+      "ph": 5.5, 
+      "timestamp": "2025-12-12T10:30:00Z"
+    }
+  ],
+  "config": {
+    "max_points": 50
+  }
+}

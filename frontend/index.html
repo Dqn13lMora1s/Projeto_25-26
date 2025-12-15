@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitorização em Tempo Real</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <h1>Monitorização de Sensores em Tempo Real</h1>
+
+  <div class="sensor-stats">
+    <p>Última Temperatura: <span id="latest-temp">--</span> °C</p>
+    <p>Última Humidade: <span id="latest-moisture">--</span> %</p>
+    <p>Último pH: <span id="latest-ph">--</span></p>
+  </div>
+  
+  <div class="chart-container">
+    <canvas id="realTimeChart" width="1000" height="500"></canvas>
+  </div>
+
+  </body>
+</html>
