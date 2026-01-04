@@ -1,5 +1,3 @@
-// sensorModel.js (CORRECTED)
-
 const mongoose = require('mongoose');
 
 const sensorSchema = new mongoose.Schema({

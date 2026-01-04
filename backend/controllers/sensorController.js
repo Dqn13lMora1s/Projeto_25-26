@@ -6,7 +6,7 @@ const SensorReading = require('../models/sensorModel'); // Your Mongoose model
 // --- ⚠️ Placeholder for Socket.io instance ⚠️ ---
 // You will need to make sure your main server.js file passes the 'io' object here 
 // or includes these functions directly if the project is small.
-// For now, let's assume 'io' is available:
+// For now, let's assume 'io' is available: 
 let io;
 
 // Function to set the Socket.io instance, called from server.js after initialization

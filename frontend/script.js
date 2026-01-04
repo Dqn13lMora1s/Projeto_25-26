@@ -1,173 +1,207 @@
-// A URL base do seu Node.js/Express Backend (substitua pelo seu IP e porta)
-const apiUrl = "http://localhost:5000";
-const maxDataPoints = 30; // Limitar o gráfico a 30 pontos para clareza
+// ==============================
+// CONFIG
+// ==============================
+const apiUrl = "http://localhost:3000"; // json-server default
+const maxDataPoints = 30;
 
-// Referências aos elementos para mostrar o último valor
+// ==============================
+// DOM ELEMENTS
+// ==============================
 const latestTempSpan = document.getElementById('latest-temp');
 const latestMoistureSpan = document.getElementById('latest-moisture');
 const latestPhSpan = document.getElementById('latest-ph');
 
+const dateFilterInput = document.getElementById('date-filter');
+const filterButton = document.getElementById('filter-button');
+const clearFilterButton = document.getElementById('clear-filter-button');
+
 let realTimeChart;
 
-// --- Funções de Ajuda ---
-
-// Formata o timestamp para exibição (ex: "11:30:05 AM")
-function formatTime(isoString) {
+// ==============================
+// HELPER FUNCTIONS
+// ==============================
+function formatDateTime(isoString) {
     const date = new Date(isoString);
-    return date.toLocaleTimeString('pt-PT');
+    return date.toLocaleString('pt-PT', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
-// Atualiza os valores do chart e da barra de estatísticas
-function updateChartAndStats(data) {
-    // 1. Atualizar o DOM com os valores mais recentes
+function formatTimeOnly(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('pt-PT', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+
+function updateLatestStats(data) {
     latestTempSpan.textContent = data.temperature.toFixed(2);
     latestMoistureSpan.textContent = data.moisture.toFixed(2);
     latestPhSpan.textContent = data.ph.toFixed(2);
-
-    // 2. Adicionar o novo ponto ao gráfico
-    const timeLabel = formatTime(data.timestamp);
-
-    realTimeChart.data.labels.push(timeLabel);
-    realTimeChart.data.datasets[0].data.push(data.temperature);
-    realTimeChart.data.datasets[1].data.push(data.moisture);
-    realTimeChart.data.datasets[2].data.push(data.ph);
-
-    // 3. Remover o ponto mais antigo se o limite for excedido
-    if (realTimeChart.data.labels.length > maxDataPoints) {
-        realTimeChart.data.labels.shift();
-        realTimeChart.data.datasets[0].data.shift();
-        realTimeChart.data.datasets[1].data.shift();
-        realTimeChart.data.datasets[2].data.shift();
-    }
-
-    // 4. Redesenhar o gráfico
-    realTimeChart.update('quiet'); // 'quiet' evita animações para melhor performance
 }
 
-// --- Funções Principais ---
+// ==============================
+// HISTORICAL DATA
+// ==============================
+async function loadHistoricalData(filterDate = null) {
+    realTimeChart.data.labels = [];
+    realTimeChart.data.datasets.forEach(ds => ds.data = []);
 
-// 1. Configurar e Inicializar o Gráfico com os Dados Históricos
-async function initChart() {
-    const chartContext = document.getElementById('realTimeChart').getContext('2d');
-    
-    // Configuração inicial do Chart.js
-    const chartConfig = {
-        type: 'line',
-        data: {
-            labels: [], 
-            datasets: [
-                {
-                    label: 'Temperatura (°C)',
-                    data: [],
-                    borderColor: 'rgb(255, 99, 132)', // Vermelho
-                    yAxisID: 'yTemp',
-                },
-                {
-                    label: 'Humidade (%)',
-                    data: [],
-                    borderColor: 'rgb(54, 162, 235)', // Azul
-                    yAxisID: 'yMoisture',
-                },
-                {
-                    label: 'pH',
-                    data: [],
-                    borderColor: 'rgb(75, 192, 192)', // Verde
-                    yAxisID: 'yPh',
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // Permite que o chart ocupe o espaço total do container
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            stacked: false,
-            scales: {
-                x: {
-                    title: { display: true, text: 'Tempo' }
-                },
-                yTemp: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: true, text: 'Temperatura (°C)' },
-                    suggestedMin: 15,
-                    suggestedMax: 35
-                },
-                yMoisture: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right', // Eixo Y à direita
-                    title: { display: true, text: 'Humidade (%)' },
-                    grid: { drawOnChartArea: false }, // Desenha apenas o eixo, não as linhas
-                    suggestedMin: 0,
-                    suggestedMax: 100
-                },
-                yPh: {
-                    type: 'linear',
-                    display: false, // Pode ser escondido, mas útil para o tooltip
-                    title: { display: true, text: 'pH' },
-                    suggestedMin: 0,
-                    suggestedMax: 14
-                }
-            }
-        }
-    };
-    
-    // Cria a instância do Chart.js
-    realTimeChart = new Chart(chartContext, chartConfig);
-
-    // Busca dados históricos (por exemplo, os últimos 50 pontos)
     try {
-        const response = await fetch(`${apiUrl}/readings`); // Ajuste o endpoint se necessário
-        const history = await response.json();
+        // Always fetch all data
+        const response = await fetch(`${apiUrl}/readings?_sort=timestamp&_order=asc`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        let history = await response.json();
+
+        // 🟢 FRONTEND DATE FILTERING (THE FIX)
+        if (filterDate) {
+            history = history.filter(item => {
+                const itemDate = new Date(item.timestamp)
+                    .toISOString()
+                    .split('T')[0];
+
+                return itemDate === filterDate;
+            });
+        }
+
+        if (history.length === 0) {
+            console.warn("No data found for selected date.");
+            realTimeChart.update();
+            return;
+        }
 
         history.forEach(item => {
-            // Preenche o gráfico com dados históricos
-            realTimeChart.data.labels.push(formatTime(item.timestamp));
+            const label = filterDate
+                ? formatTimeOnly(item.timestamp)
+                : formatDateTime(item.timestamp);
+
+            realTimeChart.data.labels.push(label);
             realTimeChart.data.datasets[0].data.push(item.temperature);
             realTimeChart.data.datasets[1].data.push(item.moisture);
             realTimeChart.data.datasets[2].data.push(item.ph);
         });
 
-        realTimeChart.update();
-        console.log(`Gráfico inicializado com ${history.length} pontos.`);
+        realTimeChart.update('quiet');
+        updateLatestStats(history[history.length - 1]);
 
-        // Atualiza as estatísticas com o último ponto
-        if (history.length > 0) {
-            updateChartAndStats(history[history.length - 1]);
-        }
+        console.log(`Loaded ${history.length} points`);
 
     } catch (error) {
-        console.error('Erro ao buscar dados históricos:', error);
+        console.error("Error loading historical data:", error);
     }
 }
 
+// ==============================
+// FILTER HANDLER
+// ==============================
+function filterHistory() {
+    const selectedDate = dateFilterInput.value;
+    loadHistoricalData(selectedDate || null);
+}
 
-// 2. Configurar a Conexão WebSocket
-function setupSocketIo() {
-    // Conecta-se ao servidor Node.js/Socket.io
-    const socket = io(apiUrl); 
+// ==============================
+// CHART INITIALIZATION
+// ==============================
+function initChartStructure() {
+    const ctx = document.getElementById('realTimeChart').getContext('2d');
 
-    socket.on('connect', () => {
-        console.log('Conectado ao servidor WebSocket.');
-    });
-
-    // Escuta pelo evento 'new-data' que o servidor emite
-    socket.on('new-data', (data) => {
-        console.log('Dados em tempo real recebidos:', data);
-        updateChartAndStats(data);
-    });
-
-    socket.on('disconnect', () => {
-        console.warn('Desconectado do servidor WebSocket.');
+    realTimeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: [],
+                    borderColor: 'rgb(255, 99, 132)',
+                    yAxisID: 'yTemp'
+                },
+                {
+                    label: 'Humidade (%)',
+                    data: [],
+                    borderColor: 'rgb(54, 162, 235)',
+                    yAxisID: 'yMoisture'
+                },
+                {
+                    label: 'pH',
+                    data: [],
+                    borderColor: 'rgb(75, 192, 192)',
+                    yAxisID: 'yPh'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tempo'
+                    }
+                },
+                yTemp: {
+                    type: 'linear',
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Temperatura (°C)'
+                    },
+                    suggestedMin: 15,
+                    suggestedMax: 45
+                },
+                yMoisture: {
+                    type: 'linear',
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Humidade (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                },
+                yPh: {
+                    type: 'linear',
+                    display: false,
+                    suggestedMin: 0,
+                    suggestedMax: 14
+                }
+            }
+        }
     });
 }
 
-// Inicialização:
+// ==============================
+// INITIALIZATION
+// ==============================
 document.addEventListener('DOMContentLoaded', () => {
-    initChart();     // 1. Configura o gráfico e carrega o histórico
-    setupSocketIo(); // 2. Configura a escuta em tempo real
+    initChartStructure();
+    loadHistoricalData();
+
+    if (filterButton) {
+        filterButton.addEventListener('click', filterHistory);
+    }
+
+    if (clearFilterButton) {
+        clearFilterButton.addEventListener('click', () => {
+            dateFilterInput.value = '';
+            filterHistory();
+        });
+    }
 });

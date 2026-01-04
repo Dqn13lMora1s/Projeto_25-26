@@ -6,7 +6,6 @@
   <title>Monitorização em Tempo Real</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -16,11 +15,17 @@
     <p>Última Temperatura: <span id="latest-temp">--</span> °C</p>
     <p>Última Humidade: <span id="latest-moisture">--</span> %</p>
     <p>Último pH: <span id="latest-ph">--</span></p>
-  </div>
-  
-  <div class="chart-container">
-    <canvas id="realTimeChart" width="1000" height="500"></canvas>
+
+    <div class="filter-controls">
+      <label for="date-filter">Filtrar Histórico por Data:</label>
+      <input type="date" id="date-filter">
+      <button id="filter-button">Aplicar Filtro</button>
+      <button id="clear-filter-button">Mostrar Tudo</button>
+    </div>
   </div>
 
-  </body>
+  <div class="chart-container">
+    <canvas id="realTimeChart"></canvas>
+  </div>
+</body>
 </html>
