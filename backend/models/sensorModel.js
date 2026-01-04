@@ -30,7 +30,7 @@ const sensorSchema = new mongoose.Schema({
     }
 }, {
     timestamps: false, // Prevents Mongoose adding its own timestamps
-    collection: 'sensor_readings' // Explicit collection name
+    collection: 'Sensor_Readings' // Explicit collection name
 });
 
 const SensorReading = mongoose.model('SensorReading', sensorSchema);

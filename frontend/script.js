@@ -1,7 +1,9 @@
 // ==============================
 // CONFIG
 // ==============================
-const apiUrl = "http://localhost:3000"; // json-server default
+const apiUrl = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://your-backend-url.onrender.com";
 const maxDataPoints = 30;
 
 // ==============================
