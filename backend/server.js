@@ -28,7 +28,7 @@ const io = socketIo(server, {
     cors: { 
         origin: [
             "http://localhost:3000",
-            "https://projeto-25-26-qftt3eiqv-moral2020-s-projects.vercel.app"
+            "https://projeto-25-26.vercel.app"
         ],
         methods: ["GET", "POST"]
     }
@@ -55,6 +55,9 @@ app.use(cors({
   methods: ["GET", "POST"]
 }));
 app.use(express.json());   // Parse JSON bodies
+app.get('/test', (req, res) => {
+  res.send('Backend is alive');
+});
 app.use('/api', sensorRoutes); // Use router
 
 // --- 6. START THE SERVER ---
