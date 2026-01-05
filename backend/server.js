@@ -47,7 +47,13 @@ io.on('connection', (socket) => {
 });
 
 // --- 5. MIDDLEWARE & ROUTES ---
-app.use(cors());          // ✅ CORS middleware for safety
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://projeto-25-26-qftt3eiqv-moral2020-s-projects.vercel.app"
+  ],
+  methods: ["GET", "POST"]
+}));
 app.use(express.json());   // Parse JSON bodies
 app.use('/api', sensorRoutes); // Use router
 

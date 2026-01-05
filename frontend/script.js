@@ -56,7 +56,7 @@ async function loadHistoricalData(filterDate = null) {
 
     try {
         // Always fetch all data
-        const response = await fetch(`${apiUrl}/readings?_sort=timestamp&_order=asc`);
+        const response = await fetch(`${apiUrl}/api/history`);
 
         if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status}`);
