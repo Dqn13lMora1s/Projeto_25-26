@@ -68,8 +68,7 @@ async function loadHistoricalData(filterDate = null) {
         if (filterDate) {
             history = history.filter(item => {
                 const itemDate = new Date(item.timestamp)
-                    .toISOString()
-                    .split('T')[0];
+                    .toLocaleDateString('sv-SE');
 
                 return itemDate === filterDate;
             });
