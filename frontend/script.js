@@ -3,7 +3,7 @@
 // ==============================
 const apiUrl = window.location.hostname === "localhost"
   ? "http://localhost:5000"
-  : "https://projeto-25-26.onrender.com";
+  : "https://projeto-25-26.onrender.com/api/history";
 const maxDataPoints = 30;
 
 // ==============================

@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "https://projeto-25-26-qftt3eiqv-moral2020-s-projects.vercel.app"
+    "https://projeto-25-26-j1e4q3r50-moral2020-s-projects.vercel.app"
   ],
   methods: ["GET", "POST"]
 }));
