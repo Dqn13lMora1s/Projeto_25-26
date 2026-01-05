@@ -34,15 +34,28 @@ const postSensorData = async (req, res) => {
 // GET /api/history
 const getHistoricalData = async (req, res) => {
     const MAX_POINTS = 100;
+    const { date } = req.query;
 
     try {
-        const history = await SensorReading.find({})
-            .sort({ timestamp: -1 })
-            .limit(MAX_POINTS)
-            .lean()
-            .exec();
+        let query = {};
 
-        res.status(200).json(history.reverse());
+        if (date) {
+            const start = new Date(date);
+            const end = new Date(date);
+            end.setDate(end.getDate() + 1);
+
+            query.timestamp = {
+                $gte: start,
+                $lt: end
+            };
+        }
+
+        const history = await SensorReading.find(query)
+            .sort({ timestamp: 1 })
+            .limit(MAX_POINTS)
+            .lean();
+
+        res.status(200).json(history);
     } catch (error) {
         console.error("Error fetching history:", error);
         res.status(500).send({ message: 'Internal server error.' });
